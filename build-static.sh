@@ -137,8 +137,45 @@ else
 	${spcCommand} build --debug --enable-zts --build-embed ${extraOpts} "${PHP_EXTENSIONS}" --with-libs="${PHP_EXTENSION_LIBS}"
 fi
 
+if ! type "go" >/dev/null 2>&1; then
+	echo "The \"go\" command must be installed. We strongly recommended installed Homebrew for automatically install Golang"
+     	exit 1
+fi
+
 if ! type "xcaddy" >/dev/null 2>&1; then
 	go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+fi
+
+if ! type "xcaddy" >/dev/null 2>&1; then
+	echo "Something went wrong after running \"go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest\"."
+
+	SHELL_RC=""
+
+	# Check shell default user
+	if [ ! -f "$HOME/.zshrc" ] && [ ! -f "$HOME/.bashrc" ]; then
+		echo "No common shell configuration file found (~/.zshrc or ~/.bashrc)."
+		exit 1
+	else
+ 		if [ -f "$HOME/.zshrc" ]; then
+			SHELL_RC="$HOME/.zshrc"
+      		elif [ -f "$HOME/.bashrc" ]; then
+			SHELL_RC="$HOME/.bashrc"
+		fi
+	fi
+
+	# Default shell support
+	if [ -z "$SHELL_RC" ]; then
+		echo "We only detection location PATH environment ~/.zshrc or ~/.bashrc"
+		exit 1
+	fi
+
+	echo "export PATH=\$PATH:$(go env GOPATH)/bin" >> $SHELL_RC
+ 	source $SHELL_RC
+
+ 	if ! type "xcaddy" >/dev/null 2>&1; then
+		echo "We already set PATH Environment with export PATH=\$PATH:$(go env GOPATH)/bin, may be something wrong in installing xcaddy or set path!"
+		exit 1
+	fi
 fi
 
 curlGitHubHeaders=(--header "X-GitHub-Api-Version: 2022-11-28")
